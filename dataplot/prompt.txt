@@ -1,0 +1,33 @@
+# IMPORTANT: App works best in python 3.6
+# to launch the app in conda -----------------------------------
+
+# go to parent folder
+cd ..
+
+# go to root folder
+cd\ 
+
+# go to the folder location of app.py e.g.
+D:
+cd .\my files_\GIT\beanft\dataplot
+
+
+# install the requirements
+pip install -r requirements.txt
+
+
+set FLASK_APP=app.py
+
+# initialise sqlite
+flask db init
+flask db migrate -m "Works fine!"
+flask db upgrade
+
+# run the app
+python app.py
+
+# test data is in .\static\data_uploads
+
+
+
+
