@@ -1,4 +1,4 @@
-from flask import render_template, abort, url_for, flash, redirect, request, Blueprint, Response, session, jsonify, make_response
+from flask import Flask, render_template, abort, url_for, flash, redirect, request, Blueprint, Response, session, jsonify, make_response
 from flask_bootstrap import Bootstrap
 from flask_login import current_user, login_required
 from dataplotsite import db
@@ -407,3 +407,7 @@ def chart():
     values = sorted(y)
     return render_template('chart.html', values=values, labels=labels, legend=legend,
     x_axis_select_str = x_axis_select_str, y_axis_select_str = y_axis_select_str)
+
+
+if __name__=='__main__':
+    app.run(debug=True)
