@@ -4,8 +4,6 @@ import numpy as np
 import sklearn
 import pickle
 import json
-from configs import *
-from helper_functions import preprocess
 
 app= Flask(__name__)
 
