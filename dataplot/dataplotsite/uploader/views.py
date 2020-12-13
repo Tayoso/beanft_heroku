@@ -196,9 +196,9 @@ def fit():
         model_results = allmodels,
         model_names = names)
 
-@app.route("/", methods=["GET"])
+@uploader.route("/", methods=["GET"])
 def hello():
-    return jsonify("hello from ML API of Titanic data!")
+    return jsonify("hello from Bean Forecast Tool!")
 
 
 @uploader.route("/predictions" , methods=['GET'])
