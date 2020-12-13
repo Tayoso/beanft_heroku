@@ -1,8 +1,8 @@
 from flask import Flask, render_template, abort, url_for, flash, redirect, request, Blueprint, Response, session, jsonify, make_response
 from flask_bootstrap import Bootstrap
 from flask_login import current_user, login_required
-from dataplotsite import db
-from dataplotsite.models import FileContents, ModelType, ListXY, factorise_data, convert_df_integer_to_numeric, convert_array_integer_to_numeric
+# from dataplotsite import db
+# from dataplotsite.models import FileContents, ModelType, ListXY, factorise_data, convert_df_integer_to_numeric, convert_array_integer_to_numeric
 from werkzeug.utils import secure_filename
 import os
 import urllib.request
@@ -55,7 +55,23 @@ basedir = os.path.abspath(os.path.dirname(__name__))
 folder = os.path.abspath(basedir + str('\\data_uploads\\'))
 ALLOWED_EXTENSIONS = set(['csv'])
 
+def factorise_data(df):
+    for i in df:
+        if df.dtypes[i] != np.float64 or np.int64:
+            df[i], _ = pd.factorize(df[i],sort = True)
+    return(df)
+        
+def convert_df_integer_to_numeric(df):
+    for i in df:
+        if df.dtypes[i] == np.int64:
+            df[i] = df[i].astype(np.float64)
+            df.round(2)
+    return(df)
 
+def convert_array_integer_to_numeric(array_obj):
+    if array_obj.dtype == 'int64':
+        array_obj = array_obj.astype(np.float64)
+    return(array_obj)
 
 # # Core code
 # @app.route('/uploads', methods=['GET', 'POST'])
@@ -198,7 +214,7 @@ ALLOWED_EXTENSIONS = set(['csv'])
 
 @app.route("/", methods=["GET"])
 def hello():
-    return jsonify("hello from Bean Forecast Tool!")
+    return jsonify("hello from Bean Forecast App!")
 
 
 @app.route("/predictions" , methods=['GET'])
@@ -369,44 +385,44 @@ def predictions():
 
 # PLOT ----------------------------------------------------------
 
-@app.route('/plot', methods=['GET', 'POST'])
-def plot():
-    return render_template('plot.html')
+# @app.route('/plot', methods=['GET', 'POST'])
+# def plot():
+#     return render_template('plot.html')
 
-@app.route("/plot_2" , methods=['GET', 'POST'])
-def plot_2():
-    if request.method == 'POST' and 'inputFiles' in request.files:
-        file = request.files['inputFiles']
-        filename = secure_filename(file.filename)
-        data_reload = FileContents(name=filename)
-        db.create_all()
-        db.session.add(data_reload)
-        db.session.commit()
-        data_reload = FileContents.query.all()
-        file.save(os.path.join(folder,filename))
-        new_data = pd.read_csv(os.path.join(folder, str(data_reload[-1])))
-        dropdown_list = list(new_data.columns)
-        return render_template('plot_2.html',
-            dropdown_list = dropdown_list)
+# @app.route("/plot_2" , methods=['GET', 'POST'])
+# def plot_2():
+#     if request.method == 'POST' and 'inputFiles' in request.files:
+#         file = request.files['inputFiles']
+#         filename = secure_filename(file.filename)
+#         data_reload = FileContents(name=filename)
+#         db.create_all()
+#         db.session.add(data_reload)
+#         db.session.commit()
+#         data_reload = FileContents.query.all()
+#         file.save(os.path.join(folder,filename))
+#         new_data = pd.read_csv(os.path.join(folder, str(data_reload[-1])))
+#         dropdown_list = list(new_data.columns)
+#         return render_template('plot_2.html',
+#             dropdown_list = dropdown_list)
         
 
-@app.route('/graph', methods=['GET', 'POST'])
-def chart():
-    x_axis_select = request.form.get('select_x')
-    y_axis_select = request.form.get('select_y')
-    x_axis_select_str = str(x_axis_select) 
-    y_axis_select_str = str(y_axis_select) 
+# @app.route('/graph', methods=['GET', 'POST'])
+# def chart():
+#     x_axis_select = request.form.get('select_x')
+#     y_axis_select = request.form.get('select_y')
+#     x_axis_select_str = str(x_axis_select) 
+#     y_axis_select_str = str(y_axis_select) 
 
-    data_reload = FileContents.query.all()
-    new_data = pd.read_csv(os.path.join(folder,str(data_reload[-1])))
-    new_data = new_data.dropna()
-    x = new_data[x_axis_select_str]
-    y = new_data[y_axis_select_str]
-    legend = 'Monthly Data'
-    labels = sorted(x)
-    values = sorted(y)
-    return render_template('chart.html', values=values, labels=labels, legend=legend,
-    x_axis_select_str = x_axis_select_str, y_axis_select_str = y_axis_select_str)
+#     data_reload = FileContents.query.all()
+#     new_data = pd.read_csv(os.path.join(folder,str(data_reload[-1])))
+#     new_data = new_data.dropna()
+#     x = new_data[x_axis_select_str]
+#     y = new_data[y_axis_select_str]
+#     legend = 'Monthly Data'
+#     labels = sorted(x)
+#     values = sorted(y)
+#     return render_template('chart.html', values=values, labels=labels, legend=legend,
+#     x_axis_select_str = x_axis_select_str, y_axis_select_str = y_axis_select_str)
 
 
 if __name__=='__main__':
