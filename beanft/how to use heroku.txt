@@ -1,0 +1,22 @@
+# in conda bash, navigate to local repo and run app
+cd\
+D:
+cd .\downloads\ML-API-master\ML-API-master
+python app.py
+
+
+# download heroku cli
+# push the local file to your git repo
+
+# IN GITBASH**
+# enter heroku
+heroku login
+
+# initiate git and create a connection to a remote repo
+git init
+heroku git:remote -a ml-beanft
+
+# deploy to heroku
+git add .
+git commit -am "first commit"
+git push heroku master

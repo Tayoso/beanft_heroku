@@ -1,1 +1,2 @@
-Basic Machine Learning Tool which consists of Classification and Regression type models.
+# ML-API
+Serving Machine Learning model as an API
