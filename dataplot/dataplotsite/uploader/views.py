@@ -197,145 +197,169 @@ def fit():
         model_names = names)
 
 
-@uploader.route("/predict_data" , methods=['GET', 'POST'])
-def predict_data():
+@uploader.route("/predictions" , methods=['GET'])
+def predictions():
 
-    if request.method == 'POST' and 'inputTestFile' in request.files:
-        # load selected model type
-        selected_model_type = request.form.get('selected_model')
-        # load the data to predict on
-        testfile = request.files['inputTestFile']
-        testfilename = secure_filename(testfile.filename)
-        testfile.save(os.path.join(folder,testfilename))
+    data = request.get_json()
+    df=pd.DataFrame(data['data'])
+    # define explanatory vars
+    cols=['sepal_length','sepal_width','petal_length','petal_width']
 
-        # load the previously selected prediction type, X and Y vars
-        pred_type_select_all = ModelType.query.all()
-        x_selected_model = ListXY.query.order_by(ListXY.id.desc()).first().x_vars
-        y_selected_model = ListXY.query.order_by(ListXY.id.desc()).first().y_var
-        pred_type = str(pred_type_select_all[-1])
-        # x_selected_model = str(x_selected_model[-1])
-        # y_selected_model = str(y_selected_model[-1])
-        
-        # load data again to predict
-        data_reloaded = FileContents.query.all()
-        data_reloaded_2 = str(data_reloaded[-1])
-        new_data = pd.read_csv(os.path.join(folder,str(data_reloaded[-1])))
-        new_data = new_data.dropna() # deletes Na and NaN
-        # import ast
-        # ast.literal_eval(x_selected_model)
-        X = new_data[eval(x_selected_model)]
-        Y = new_data[y_selected_model]
-
-        if pred_type == "Classification":
-            # Step 1: Refactor columns with text to integer and remove NAs
-            X = factorise_data(X)
-
-            # prepare models
-            seed = 7
-            models = []
-            models.append(('RandomForestClassifier', RandomForestClassifier(n_estimators=200)))
-            models.append(('GradientBoostingClassifier', GradientBoostingClassifier(n_estimators=200)))
-            models.append(('LogisticRegression', LogisticRegression()))
-            models.append(('LinearDiscriminantAnalysis', LinearDiscriminantAnalysis()))
-            models.append(('KNeighborsClassifier', KNeighborsClassifier()))
-            models.append(('GaussianNB', GaussianNB()))
-            models.append(('SVC', SVC()))
-
-            # evaluate each model in turn
-            results = []
-            names = []
-            allmodels = []
-            scoring = 'accuracy'
-            for name, model in models:
-                X_train, X_test, Y_train, Y_test = train_test_split(X,Y, test_size = 0.3, random_state = 7)
-                # standard scaler #standardises the feature variables
-                sc = StandardScaler()
-                X_train = sc.fit_transform(X_train)
-                X_test = sc.transform(X_test)
-                if selected_model_type == name:
-                    model_to_fit = model
-                    model_to_fit.fit(X_train, Y_train)
-                    # save model and test api
-                    saved_model = os.path.join(folder, str("final_model.sav")) 
-                    pickle.dump(model_to_fit,open(saved_model, 'wb'))
-                    # load data to predict on
-                    testfilename_csv = pd.read_csv(folder + str("\\") + str(testfilename), dtype=str)
-                    test_data = testfilename_csv.dropna() # deletes Na and NaN
-                    # Step 1: Using Classes, Refactor columns with text to integer and remove NAs
-                    test_data = factorise_data(test_data)
-                    # data = factorise_data(test_data)
-                    # data = test_data_inst.convert_integer_to_numeric(test_data)
-
-                    # Predict on the loaded data, first scale it
-                    data = sc.fit_transform(test_data)
-                    predictions = model_to_fit.predict(data)
-                    # Use classes to apply the int to float function
-                    predictions = convert_array_integer_to_numeric(predictions)
-                    # jsonify data to comply with api reqs.
-                    # data=data.to_dict('records')
-                    # data_json={'data':predictions}
-                    # headers = {
-                    #     'content-type': "application/json",
-                    #     'cache-control': "no-cache",
-                    # }
-                    # r=requests.get(url='http://127.0.0.1:5000/predict_data',headers=headers,data=json.dumps(data_json))
-                    # data=r.json()
-
-                    # r=requests.get(url='https://ml-beanft.herokuapp.com/predictions',headers=headers,data=json.dumps(data_json))
-                else: 
-                    print("There's been an issue fitting your model")
-
-
-        if pred_type == "Regression":
-            # Step 1: Refactor columns with text to integer and remove NAs
-            X = factorise_data(X)
-
-            # prepare models
-            models = []
-            models.append(('RandomForestRegressor', RandomForestRegressor(n_estimators=200)))
-            models.append(('GradientBoostingRegressor', GradientBoostingRegressor(n_estimators=200)))
-            models.append(('Ridge', Ridge()))
-            models.append(('ElasticNet', ElasticNet()))
-            models.append(('Lasso', Lasso()))
-            models.append(('SVR', SVR()))
-
-            # evaluate each model in turn
-            results = []
-            names = []
-            allmodels = []
-            for name, model in models:
-                X_train, X_test, y_train, y_test = train_test_split(X,Y, test_size = 0.3, random_state = 7)
-                # standard scaler #standardises the feature variables
-                sc = StandardScaler()
-                X_train = sc.fit_transform(X_train)
-                X_test = sc.transform(X_test)
-                if selected_model_type == name:
-                    model_to_fit = model
-                    model_to_fit.fit(X_train, y_train)
-                    # save model and test api
-                    saved_model = os.path.join(folder, str("final_model.sav")) 
-                    pickle.dump(model_to_fit,open(saved_model, 'wb'))
-                    # load data to predict on
-                    testfilename_csv = pd.read_csv(folder + str("\\") + str(testfilename), dtype=str)
-                    test_data = testfilename_csv.dropna() # deletes Na and NaN
-                    # Step 1: Using Classes, Refactor columns with text to integer and remove NAs
-                    test_data = factorise_data(test_data)
-                    # Predict on the loaded data, first scale it
-                    data = sc.transform(test_data)
-                    predictions = model_to_fit.predict(data)
-                    # Use classes to apply the int to float function
-                    predictions = convert_array_integer_to_numeric(predictions)
-                else: 
-                    print("There's been an issue fitting your model")
-    else:
+    data_all_x_cols = cols
+    try:
+        # preprocess the data for ML
+        new_data = df.dropna() # deletes Na and NaN
+        preprocessed_df = new_data
+    except:
         return jsonify("Error occured while preprocessing your data for our model!")
-      
-    print("Done!") 
-    # predictions.to_csv(os.path.join(folder,str(testfilename),str("_predicted.csv"))  
+    # filename = model_to_fit
+    saved_model = os.path.join(folder, str("final_model.sav")) 
+    loaded_model = pickle.load(open(saved_model, 'rb'))
+    try:
+        predictions= loaded_model.predict(preprocessed_df[data_all_x_cols])
+    except:
+        return jsonify("Error occured while processing your data into our model!")
+    print("done")
     response={'data':[]}
-    # response={'data':[],'prediction_label':{'species':"setosa",'species':"versicolor",'species':"virginica"}}
-    response['data']=list(predictions)  
+    response['data']=list(predictions)
     return make_response(jsonify(response),200)
+
+    # if request.method == 'POST' and 'inputTestFile' in request.files:
+    #     # load selected model type
+    #     selected_model_type = request.form.get('selected_model')
+    #     # load the data to predict on
+    #     testfile = request.files['inputTestFile']
+    #     testfilename = secure_filename(testfile.filename)
+    #     testfile.save(os.path.join(folder,testfilename))
+
+    #     # load the previously selected prediction type, X and Y vars
+    #     pred_type_select_all = ModelType.query.all()
+    #     x_selected_model = ListXY.query.order_by(ListXY.id.desc()).first().x_vars
+    #     y_selected_model = ListXY.query.order_by(ListXY.id.desc()).first().y_var
+    #     pred_type = str(pred_type_select_all[-1])
+    #     # x_selected_model = str(x_selected_model[-1])
+    #     # y_selected_model = str(y_selected_model[-1])
+        
+    #     # load data again to predict
+    #     data_reloaded = FileContents.query.all()
+    #     data_reloaded_2 = str(data_reloaded[-1])
+    #     new_data = pd.read_csv(os.path.join(folder,str(data_reloaded[-1])))
+    #     new_data = new_data.dropna() # deletes Na and NaN
+    #     # import ast
+    #     # ast.literal_eval(x_selected_model)
+    #     X = new_data[eval(x_selected_model)]
+    #     Y = new_data[y_selected_model]
+
+    #     if pred_type == "Classification":
+    #         # Step 1: Refactor columns with text to integer and remove NAs
+    #         X = factorise_data(X)
+
+    #         # prepare models
+    #         seed = 7
+    #         models = []
+    #         models.append(('RandomForestClassifier', RandomForestClassifier(n_estimators=200)))
+    #         models.append(('GradientBoostingClassifier', GradientBoostingClassifier(n_estimators=200)))
+    #         models.append(('LogisticRegression', LogisticRegression()))
+    #         models.append(('LinearDiscriminantAnalysis', LinearDiscriminantAnalysis()))
+    #         models.append(('KNeighborsClassifier', KNeighborsClassifier()))
+    #         models.append(('GaussianNB', GaussianNB()))
+    #         models.append(('SVC', SVC()))
+
+    #         # evaluate each model in turn
+    #         results = []
+    #         names = []
+    #         allmodels = []
+    #         scoring = 'accuracy'
+    #         for name, model in models:
+    #             X_train, X_test, Y_train, Y_test = train_test_split(X,Y, test_size = 0.3, random_state = 7)
+    #             # standard scaler #standardises the feature variables
+    #             sc = StandardScaler()
+    #             X_train = sc.fit_transform(X_train)
+    #             X_test = sc.transform(X_test)
+    #             if selected_model_type == name:
+    #                 model_to_fit = model
+    #                 model_to_fit.fit(X_train, Y_train)
+    #                 # save model and test api
+    #                 saved_model = os.path.join(folder, str("final_model.sav")) 
+    #                 pickle.dump(model_to_fit,open(saved_model, 'wb'))
+    #                 # load data to predict on
+    #                 testfilename_csv = pd.read_csv(folder + str("\\") + str(testfilename), dtype=str)
+    #                 test_data = testfilename_csv.dropna() # deletes Na and NaN
+    #                 # Step 1: Using Classes, Refactor columns with text to integer and remove NAs
+    #                 test_data = factorise_data(test_data)
+    #                 # data = factorise_data(test_data)
+    #                 # data = test_data_inst.convert_integer_to_numeric(test_data)
+
+    #                 # Predict on the loaded data, first scale it
+    #                 data = sc.fit_transform(test_data)
+    #                 predictions = model_to_fit.predict(data)
+    #                 # Use classes to apply the int to float function
+    #                 predictions = convert_array_integer_to_numeric(predictions)
+    #                 # jsonify data to comply with api reqs.
+    #                 # data=data.to_dict('records')
+    #                 # data_json={'data':predictions}
+    #                 # headers = {
+    #                 #     'content-type': "application/json",
+    #                 #     'cache-control': "no-cache",
+    #                 # }
+    #                 # r=requests.get(url='http://127.0.0.1:5000/predict_data',headers=headers,data=json.dumps(data_json))
+    #                 # data=r.json()
+
+    #                 # r=requests.get(url='https://ml-beanft.herokuapp.com/predictions',headers=headers,data=json.dumps(data_json))
+    #             else: 
+    #                 print("There's been an issue fitting your model")
+
+
+    #     if pred_type == "Regression":
+    #         # Step 1: Refactor columns with text to integer and remove NAs
+    #         X = factorise_data(X)
+
+    #         # prepare models
+    #         models = []
+    #         models.append(('RandomForestRegressor', RandomForestRegressor(n_estimators=200)))
+    #         models.append(('GradientBoostingRegressor', GradientBoostingRegressor(n_estimators=200)))
+    #         models.append(('Ridge', Ridge()))
+    #         models.append(('ElasticNet', ElasticNet()))
+    #         models.append(('Lasso', Lasso()))
+    #         models.append(('SVR', SVR()))
+
+    #         # evaluate each model in turn
+    #         results = []
+    #         names = []
+    #         allmodels = []
+    #         for name, model in models:
+    #             X_train, X_test, y_train, y_test = train_test_split(X,Y, test_size = 0.3, random_state = 7)
+    #             # standard scaler #standardises the feature variables
+    #             sc = StandardScaler()
+    #             X_train = sc.fit_transform(X_train)
+    #             X_test = sc.transform(X_test)
+    #             if selected_model_type == name:
+    #                 model_to_fit = model
+    #                 model_to_fit.fit(X_train, y_train)
+    #                 # save model and test api
+    #                 saved_model = os.path.join(folder, str("final_model.sav")) 
+    #                 pickle.dump(model_to_fit,open(saved_model, 'wb'))
+    #                 # load data to predict on
+    #                 testfilename_csv = pd.read_csv(folder + str("\\") + str(testfilename), dtype=str)
+    #                 test_data = testfilename_csv.dropna() # deletes Na and NaN
+    #                 # Step 1: Using Classes, Refactor columns with text to integer and remove NAs
+    #                 test_data = factorise_data(test_data)
+    #                 # Predict on the loaded data, first scale it
+    #                 data = sc.transform(test_data)
+    #                 predictions = model_to_fit.predict(data)
+    #                 # Use classes to apply the int to float function
+    #                 predictions = convert_array_integer_to_numeric(predictions)
+    #             else: 
+    #                 print("There's been an issue fitting your model")
+    # else:
+    #     return jsonify("Error occured while preprocessing your data for our model!")
+      
+    # print("Done!") 
+    # # predictions.to_csv(os.path.join(folder,str(testfilename),str("_predicted.csv"))  
+    # response={'data':[]}
+    # # response={'data':[],'prediction_label':{'species':"setosa",'species':"versicolor",'species':"virginica"}}
+    # response['data']=list(predictions)  
+    # return make_response(jsonify(response),200)
 
 
 
