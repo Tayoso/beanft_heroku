@@ -52,7 +52,7 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 # Configuration settings
 app= Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__name__))
-folder = os.path.abspath(basedir + str('\\dataplotsite\\static\\data_uploads\\'))
+folder = os.path.abspath(basedir + str('\\data_uploads\\'))
 ALLOWED_EXTENSIONS = set(['csv'])
 
 
