@@ -11,7 +11,6 @@ app= Flask(__name__)
 def hello():
     return jsonify("Hello from Bean Forecast App!")
 
-
 @app.route("/predictions" , methods=['GET'])
 def predictions():
 
@@ -27,8 +26,7 @@ def predictions():
         preprocessed_df = new_data
     except:
         return jsonify("Error occured while preprocessing your data for our model!")
-    # filename = model_to_fit
-    saved_model = os.path.join(folder, str("final_model.sav")) 
+    saved_model = "final_model.sav"
     loaded_model = pickle.load(open(saved_model, 'rb'))
     try:
         predictions= loaded_model.predict(preprocessed_df[data_all_x_cols])
