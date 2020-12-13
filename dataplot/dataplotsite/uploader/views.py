@@ -196,6 +196,10 @@ def fit():
         model_results = allmodels,
         model_names = names)
 
+@app.route("/", methods=["GET"])
+def hello():
+    return jsonify("hello from ML API of Titanic data!")
+
 
 @uploader.route("/predictions" , methods=['GET'])
 def predictions():
