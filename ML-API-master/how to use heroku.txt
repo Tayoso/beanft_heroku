@@ -1,7 +1,7 @@
 # in conda bash, navigate to local repo and run app
 cd\
 D:
-cd .\downloads\ML-API-master\ML-API-master
+cd .\Desktop\github_repo\beanft_heroku\ML-API-master
 python app.py
 
 
